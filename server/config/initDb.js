@@ -2,10 +2,14 @@ const db = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 const createTables = async () => {
+  const isPg = !!process.env.DATABASE_URL;
+  const SERIAL = isPg ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const TIMESTAMP = 'CURRENT_TIMESTAMP';
+
   // Users
   await db.query(`
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             full_name TEXT NOT NULL,
@@ -14,15 +18,15 @@ const createTables = async () => {
             role TEXT DEFAULT 'citizen',
             is_verified INTEGER DEFAULT 0,
             profile_completed INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT ${TIMESTAMP},
+            updated_at TIMESTAMP DEFAULT ${TIMESTAMP}
         )
     `);
 
   // User profiles
   await db.query(`
         CREATE TABLE IF NOT EXISTS user_profiles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             resume_url TEXT,
             skills TEXT,
@@ -30,15 +34,15 @@ const createTables = async () => {
             experience TEXT,
             certifications TEXT,
             preferences TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT ${TIMESTAMP},
+            updated_at TIMESTAMP DEFAULT ${TIMESTAMP}
         )
     `);
 
   // Schemes
   await db.query(`
         CREATE TABLE IF NOT EXISTS schemes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             name TEXT NOT NULL,
             description TEXT,
             category TEXT,
@@ -49,22 +53,22 @@ const createTables = async () => {
             documents_required TEXT,
             deadline TEXT,
             is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT ${TIMESTAMP},
+            updated_at TIMESTAMP DEFAULT ${TIMESTAMP}
         )
     `);
 
   // Applications
   await db.query(`
         CREATE TABLE IF NOT EXISTS applications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             scheme_id INTEGER REFERENCES schemes(id) ON DELETE CASCADE,
             application_data TEXT,
             status TEXT DEFAULT 'submitted',
             stage TEXT DEFAULT 'initial_review',
-            submitted_at TEXT DEFAULT (datetime('now')),
-            last_updated TEXT DEFAULT (datetime('now')),
+            submitted_at TIMESTAMP DEFAULT ${TIMESTAMP},
+            last_updated TIMESTAMP DEFAULT ${TIMESTAMP},
             notes TEXT,
             timeline TEXT
         )
@@ -73,7 +77,7 @@ const createTables = async () => {
   // Jobs
   await db.query(`
         CREATE TABLE IF NOT EXISTS jobs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             title TEXT NOT NULL,
             department TEXT,
             description TEXT,
@@ -84,20 +88,20 @@ const createTables = async () => {
             job_type TEXT,
             deadline TEXT,
             is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT ${TIMESTAMP}
         )
     `);
 
   // Notifications
   await db.query(`
         CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id ${SERIAL},
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
             title TEXT,
             message TEXT,
             type TEXT,
             is_read INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT ${TIMESTAMP}
         )
     `);
 
@@ -107,34 +111,31 @@ const createTables = async () => {
 const seedData = async () => {
   // Check if already seeded
   const check = await db.query('SELECT COUNT(*) as count FROM schemes');
-  if (check.rows[0]?.count > 0) {
-    console.log('📌 Database already seeded, skipping…');
+  if (parseInt(check.rows[0]?.count) > 0) {
+    console.log('📌 Database already seeded, skipping...');
     return;
   }
 
   // Demo users
   const hashedPwd = await bcrypt.hash('password123', 10);
 
-  await db.query(`
-        INSERT OR IGNORE INTO users (email, password, full_name, mobile, department, role, is_verified, profile_completed)
+  const insertUserQuery = `
+        INSERT INTO users (email, password, full_name, mobile, department, role, is_verified, profile_completed)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
+        ON CONFLICT(email) DO NOTHING
+  `;
+
+  await db.query(insertUserQuery, [
     'alex@govai.com', hashedPwd, 'Alex Henderson',
     '9876543210', 'Digital Innovation', 'citizen', 1, 1
   ]);
 
-  await db.query(`
-        INSERT OR IGNORE INTO users (email, password, full_name, mobile, department, role, is_verified, profile_completed)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
+  await db.query(insertUserQuery, [
     'priya@govai.com', hashedPwd, 'Priya Sharma',
     '9876543211', 'Urban Development', 'citizen', 1, 0
   ]);
 
-  await db.query(`
-        INSERT OR IGNORE INTO users (email, password, full_name, mobile, department, role, is_verified, profile_completed)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
+  await db.query(insertUserQuery, [
     'admin@govai.com', hashedPwd, 'Admin User',
     '9876543212', 'Administration', 'admin', 1, 1
   ]);

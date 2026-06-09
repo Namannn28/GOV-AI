@@ -93,7 +93,7 @@ router.post('/login',
             }
 
             await db.query(
-                `UPDATE users SET updated_at = datetime('now') WHERE id = ?`,
+                `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                 [user.id]
             );
 

@@ -47,7 +47,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
                  SET full_name  = COALESCE(?, full_name),
                      mobile     = COALESCE(?, mobile),
                      department = COALESCE(?, department),
-                     updated_at = datetime('now')
+                     updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
                 [full_name || null, mobile || null, department || null, req.user.id]
             );
@@ -79,7 +79,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
                      experience     = COALESCE(?, experience),
                      certifications = COALESCE(?, certifications),
                      preferences    = COALESCE(?, preferences),
-                     updated_at     = datetime('now')
+                     updated_at     = CURRENT_TIMESTAMP
                  WHERE user_id = ?`,
                 [resume_url || null, skillsStr, eduStr, expStr, certsStr, prefStr, req.user.id]
             );
