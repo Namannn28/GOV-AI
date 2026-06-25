@@ -2,7 +2,7 @@
 
 Node.js + Express + PostgreSQL backend for the GovAI platform.
 
-## 🚀 Features
+##  Features
 
 - **Authentication**: JWT-based auth with register/login/OAuth support
 - **User Management**: Profile management and preferences
