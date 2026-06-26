@@ -11,7 +11,7 @@ Node.js + Express + PostgreSQL backend for the GovAI platform.
 - **Notifications**: Real-time notifications for users
 - **PostgreSQL Database**: Robust data persistence
 
-## 📋 Prerequisites
+##  Prerequisites
 
 - Node.js (v16 or higher)
 - PostgreSQL (v12 or higher)
